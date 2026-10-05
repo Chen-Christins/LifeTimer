@@ -1,0 +1,51 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build iOS Simulator
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select latest Xcode
+        run: |
+          ls /Applications | grep -i xcode || true
+          LATEST="$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)"
+          if [ -n "$LATEST" ]; then
+            sudo xcode-select -s "$LATEST/Contents/Developer"
+          fi
+          xcodebuild -version
+
+      - name: Build
+        run: |
+          xcodebuild \
+            -project LifeTimer.xcodeproj \
+            -scheme LifeTimer \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Package app
+        run: |
+          APP=$(find ~/Library/Developer/Xcode/DerivedData -maxdepth 6 -name "LifeTimer.app" -path "*Debug-iphonesimulator*" | head -1)
+          echo "APP=$APP"
+          mkdir -p build
+          cp -R "$APP" build/
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LifeTimer-simulator
+          path: build/LifeTimer.app
+          if-no-files-found: warn
