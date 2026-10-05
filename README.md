@@ -66,7 +66,14 @@ xcodebuild \
 
 ## 持续集成
 
-`.github/workflows/build.yml` 会在每次 push / PR 时用最新的 Xcode 构建 iOS 模拟器版本（不签名），并把 `LifeTimer.app` 作为构建产物上传。
+`.github/workflows/build.yml` 会在每次 push / PR / 手动触发时，用最新的 Xcode 构建 **Release 真机版本（未签名）**，打包成 `LifeTimer.ipa` 并作为构建产物上传。
+
+由于仓库里没有签名证书，CI 出的是**未签名 IPA**，不能在设备上直接安装。安装方式二选一：
+
+- 用 [Sideloadly](https://sideloadly.io/) / [AltStore](https://altstore.io/) 打开该 IPA，用你自己的 Apple ID 重签后安装；
+- 或在 Xcode 中打开工程直接 Run 到自己的设备。
+
+> 想要 CI 直接出**已签名**的 IPA，需要在仓库 Secrets 中配置证书（`.p12`）与描述文件，并在导出时指定对应的 Team / Provisioning Profile；免费个人账号无法做 Ad Hoc 分发，通常用未签名 IPA + 工具重签。
 
 ## License
 
